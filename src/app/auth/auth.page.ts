@@ -11,6 +11,7 @@ import { NgForm } from '@angular/forms';
 })
 export class AuthPage implements OnInit {
   isLoading = false;
+  isLoggedIn = true;
   constructor(private authService: AuthService, private router:Router, private loadingCtrl: LoadingController) { }
 
   ngOnInit() {
@@ -30,7 +31,7 @@ export class AuthPage implements OnInit {
         this.isLoading = false;
         loadingEl.dismiss();
         this.router.navigateByUrl('/places/tabs/discover');
-      })
+      }, 1500);
     });
     
     // setTimeout(() => {
@@ -41,7 +42,23 @@ export class AuthPage implements OnInit {
   }
 
   onSubmit(form: NgForm){
-    console.log(form);
+    if(!form.valid)
+      return;
+    
+    const email = form.value.email;
+    const password = form.value.password;
 
+    console.log(email,password);
+
+    if(this.isLoggedIn){
+      // Send request to login servers
+    }
+    else{
+      // Send request to sign-up servers
+    }
+  }
+
+  onSwitchAuthMode(){
+    this.isLoggedIn = !this.isLoggedIn;
   }
 }

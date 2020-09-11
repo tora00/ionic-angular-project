@@ -1,11 +1,11 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Authenticate</ion-title>
+    <ion-title>{{isLoggedIn ? 'Login' : 'Signup'}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+  <form #form="ngForm" (ngSubmit)="onSubmit(form)">
     <ion-grid>
       <ion-row>
         <ion-col size-sm="6" offset-sm="3">
@@ -13,21 +13,29 @@
             <ion-item>
               <ion-label position="floating">E-Mail</ion-label>
               <ion-input
-                type="text"
-                ngModel
+                type="email"
                 name="email"
+                ngModel
                 required
                 email
+                #emailCtrl="ngModel"
               ></ion-input>
+            </ion-item>
+            <ion-item *ngIf="!emailCtrl.valid && emailCtrl.touched" lines="none">
+              <ion-label>Please enter a valid e-mail address!</ion-label>
             </ion-item>
             <ion-item>
               <ion-label position="floating">Password</ion-label>
               <ion-input
                 type="password"
-                ngModel
                 name="password"
+                ngModel
                 required
-                minlength="6"></ion-input>
+                minlength="6"
+                #passCtrl="ngModel"></ion-input>
+            </ion-item>
+            <ion-item *ngIf="!passCtrl.valid && passCtrl.touched" lines="none">
+              <ion-label>Please enter a password!</ion-label>
             </ion-item>
             <!-- <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner> -->
           </ion-list>
@@ -36,19 +44,20 @@
       <ion-row>
         <ion-col size-md="6" offset-md="3">
           <ion-button
+            type="button"
             color="primary" 
             fill="clear" 
-            expand="block" 
-            type="button"
+            expand="block"
+            (click)="onSwitchAuthMode()" 
           >
-            Switch to Login
+            Switch to {{isLoggedIn ? 'Sign Up' : 'Login'}}
           </ion-button>
           <ion-button
-            color="primary"
-            (click)="onLogin()"
-            *ngIf="!isLoading"
-            expand="block"
             type="submit"
+            color="primary"
+            expand="block"
+            (click)="onLogin()"
+            [disabled]="!form.valid"
           >
             Login
           </ion-button>
