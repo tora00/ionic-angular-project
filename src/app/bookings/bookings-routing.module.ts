@@ -7,6 +7,20 @@ const routes: Routes = [
   {
     path: '',
     component: BookingsPage
+  },
+  {
+    path: 'booking-detail',
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./booking-detail/booking-detail.module').then( m => m.BookingDetailPageModule)
+      },
+      {
+        path: ':bookingId',
+        loadChildren: () => import('./booking-detail/booking-detail.module').then( m => m.BookingDetailPageModule)
+      }
+    ]
+    
   }
 ];
 

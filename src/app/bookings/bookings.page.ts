@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BookingService } from './booking.service';
 import { Booking } from './booking.model';
-import { IonItemSliding, LoadingController } from '@ionic/angular';
+import { AlertController, IonItemSliding, LoadingController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -14,7 +14,10 @@ export class BookingsPage implements OnInit, OnDestroy {
   private bookingSub: Subscription;
   isLoading = false;
 
-  constructor(private bookingService: BookingService, private loadingCtrl: LoadingController) { }
+  constructor(
+    private bookingService: BookingService, 
+    private loadingCtrl: LoadingController,
+    private alertCtrl: AlertController) { }
 
   ngOnInit() {
     this.bookingSub = this.bookingService.bookings.subscribe(bookings => {
@@ -36,17 +39,26 @@ export class BookingsPage implements OnInit, OnDestroy {
   }
 
   onCancelBooking(bookingId: string, slidingEl: IonItemSliding){
-    slidingEl.close();
-
-    this.loadingCtrl.create({message: 'Cancelling'}).then(loadingEl => {
-      loadingEl.present();
-      this.bookingService.cancelBooking(bookingId).subscribe( () => {
-        loadingEl.dismiss();
-      });
-    })
-
-    
-    
+    this.alertCtrl.create({
+      header: 'Booking Cancellation',
+      message: 'Are you sure you want to cancel this booking?',
+      buttons: [
+        {
+          text: 'Yes',
+          handler: () => {
+            this.bookingService.cancelBooking(bookingId).subscribe();
+          }
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            slidingEl.close();
+          }
+        }
+      ]
+    }).then(alertel => {
+      alertel.present();
+    })    
   }
-
 }

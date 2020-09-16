@@ -1,5 +1,5 @@
 {
-  "appId": "io.ionic.starter",
+  "appId": "com.udemycourse.ionicangular",
   "appName": "ionic-angular-project",
   "bundledWebRuntime": false,
   "npmClient": "npm",

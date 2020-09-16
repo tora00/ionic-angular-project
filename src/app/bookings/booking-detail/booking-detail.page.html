@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/places/tabs/offers"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="ion-text-center" *ngIf="!isLoading">Booking for: {{booking.placeTitle}}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="ion-text-center">
+    <ion-spinner color="primary" *ngIf="isLoading"></ion-spinner>
+  </div>
+  <ion-grid class="ion-no-padding" *ngIf="!isLoading">
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-img [src]="booking.placeImage"></ion-img>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-text-center">
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-button [routerLink]="['/','places','tabs','discover',booking.placeId]">
+          Visit Page
+        </ion-button>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-item>
+          <ion-icon name="person-circle-outline" color="primary"></ion-icon>
+          <ion-label>Booked By:</ion-label>
+          <ion-text>{{booking.firstName}} {{booking.lastName}}</ion-text>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-item>
+          <ion-icon name="people-outline" color="primary"></ion-icon>
+          <ion-label>Guests: </ion-label>
+          <ion-text>{{booking.guestNumber}}</ion-text>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-item>
+          <ion-icon name="calendar" color="primary"></ion-icon>
+          <ion-label> Booking Date:</ion-label>
+          <div>
+            <ion-text color="tertiary" class="space-left">
+              {{booking.bookedFrom | date}}
+            </ion-text>
+            <span class="space-left"> to </span>
+            <ion-text color="tertiary" class="space-left">
+              {{booking.bookedTo | date}}
+            </ion-text>
+          </div>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-text-center">
+      <ion-col size-sm="6" offset-sm="3">
+        <ion-button 
+          color="danger"
+          (click)="onCancelBooking(booking.id)"
+        >
+          <ion-icon name="trash-outline" slot="start"></ion-icon>
+          Cancel Booking
+        </ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

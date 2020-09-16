@@ -30,12 +30,26 @@
             <app-offer-item [offer]="offer"></app-offer-item>
             <ion-item-options side="end">
               <ion-item-option
-                color="secondary"
+                color="transparent"
+                (click)="onDelete(offer.id, slidingItem)"
+              >
+              <ion-icon name="trash-outline" slot="icon-only" class="delete-button"></ion-icon>
+              </ion-item-option>
+              <ion-item-option
+                color="transparent"
                 (click)="onEdit(offer.id, slidingItem)"
               >
-                <ion-icon name="create" slot="icon-only"></ion-icon>
+                <ion-icon name="create-outline" slot="icon-only" class="edit-button"></ion-icon>
               </ion-item-option>
             </ion-item-options>
+            <!--ion-item-options side="start">
+              <ion-item-option
+                color="danger"
+                (click)="onDelete(offer.id, slidingItem)"
+              >
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-item-option>
+            </ion-item-options-->
           </ion-item-sliding>
         </ion-list>
       </ion-col>

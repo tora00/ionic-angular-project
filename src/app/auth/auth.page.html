@@ -56,10 +56,9 @@
             type="submit"
             color="primary"
             expand="block"
-            (click)="onLogin()"
             [disabled]="!form.valid"
           >
-            Login
+            {{isLoggedIn? 'Login' : 'Sign Up'}}
           </ion-button>
         </ion-col>
       </ion-row>

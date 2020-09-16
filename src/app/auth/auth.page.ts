@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from './auth.service';
+import { AuthResponseData, AuthService } from './auth.service';
 import { Router } from '@angular/router';
-import { LoadingController } from '@ionic/angular';
+import { AlertController, LoadingController } from '@ionic/angular';
 import { NgForm } from '@angular/forms';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-auth',
@@ -12,14 +13,15 @@ import { NgForm } from '@angular/forms';
 export class AuthPage implements OnInit {
   isLoading = false;
   isLoggedIn = true;
-  constructor(private authService: AuthService, private router:Router, private loadingCtrl: LoadingController) { }
+  constructor(private authService: AuthService, private router:Router, private loadingCtrl: LoadingController,
+    private alertCtrl: AlertController) { }
 
   ngOnInit() {
   }
 
-  onLogin(){
+
+  authenticate(email: string, password: string){
     this.isLoading = true;
-    this.authService.login();
     this.loadingCtrl
     .create({
       keyboardClose: true,
@@ -27,18 +29,36 @@ export class AuthPage implements OnInit {
     })
     .then(loadingEl => {
       loadingEl.present();
-      setTimeout(()=>{
-        this.isLoading = false;
+
+      let authObs: Observable<AuthResponseData>;
+
+      if(this.isLoggedIn){
+        authObs = this.authService.login(email,password);
+      }
+      else{
+        authObs = this.authService.signup(email, password);
+      }
+      authObs.subscribe(resData => {
+          this.isLoading = false;
+          loadingEl.dismiss();
+          this.router.navigateByUrl('/places/tabs/discover');
+      },
+      errRes => {
         loadingEl.dismiss();
-        this.router.navigateByUrl('/places/tabs/discover');
-      }, 1500);
-    });
-    
-    // setTimeout(() => {
-    //   this.isLoading = false;
-    //   this.router.navigateByUrl('/places/tabs/discover');
-    // }, 1000);
-    
+        const code = errRes.error.error.message;
+        let message ='Could not create new user, please try again.';
+        if(code === 'EMAIL_EXISTS'){
+          message = 'This email address already exists'; 
+        }
+        else if(code === 'EMAIL_NOT_FOUND'){
+          message ='Email address could not be found';
+        }
+        else if(code === 'INVALID_PASSWORD'){
+          message = 'Invalid login information'
+        }
+        this.showAlert(message);
+      });
+    });    
   }
 
   onSubmit(form: NgForm){
@@ -47,18 +67,24 @@ export class AuthPage implements OnInit {
     
     const email = form.value.email;
     const password = form.value.password;
-
-    console.log(email,password);
-
-    if(this.isLoggedIn){
-      // Send request to login servers
-    }
-    else{
-      // Send request to sign-up servers
-    }
+    this.authenticate(email, password);
+    form.reset();
   }
 
   onSwitchAuthMode(){
     this.isLoggedIn = !this.isLoggedIn;
+  }
+
+  private showAlert(message: string){
+    this.alertCtrl.create({
+      header: 'Authentication failed',
+      message: message,
+      buttons: [
+        'Okay'
+      ]
+    })
+    .then(alertEl => {
+      alertEl.present()
+    });
   }
 }

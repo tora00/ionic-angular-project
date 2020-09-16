@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 
 interface BookingData {
     bookedFrom: string;
-    bookedto: string;
+    bookedTo: string;
     firstName: string;
     guestNumber: number;
     lastName: string;
@@ -15,6 +15,7 @@ interface BookingData {
     placeImage : string;
     placeTitle: string;
     userId: string;
+    price: number;
 }
 
 @Injectable({providedIn: 'root'})
@@ -29,49 +30,69 @@ export class BookingService {
         return this._bookings.asObservable();
     }
 
-    addBooking(placeId: string, placeTitle: string, placeImage: string, firstName: string, lastName: string, guestNumber: number, dateFrom: Date, dateTo: Date){
+    addBooking(
+        placeId: string, 
+        placeTitle: string, 
+        placeImage: string, 
+        firstName: string, 
+        lastName: string, 
+        guestNumber: number, 
+        dateFrom: Date, 
+        dateTo: Date){
         let generatedId: string;
-        const newBooking = new Booking(
-            Math.random().toString(),
-            placeId,
-            this.authService.userId,
-            placeTitle,
-            placeImage,
-            firstName,
-            lastName,
-            guestNumber,
-            dateFrom,
-            dateTo
-        );
-        
-        // Sends POST request to add booking
-        // Store data we get back to "name" field
-        // Return observable chain for subscription
-        return this.http.post<{name: string}>(
-            'https://ionic-angular-project-d88b4.firebaseio.com/bookings.json',
-            {
-                ...newBooking,
-                id: null
+        let newBooking: Booking;
+        let fetchedUserId: string;
+        return this.authService.userId.pipe(take(1), switchMap(userId => {
+            if(!userId){
+                throw new Error ('No user id found!');
             }
-        )
-        .pipe(
-            switchMap(resData => {
-                generatedId = resData.name;
-                return this.bookings;
-            }),
-            take(1),            
-            tap(bookings => {
-                newBooking.id=generatedId;
-                this._bookings.next(bookings.concat(newBooking));
-            })
+            fetchedUserId = userId;
+            return this.authService.token;            
+        }),
+        take(1),
+        switchMap(token => {
+            newBooking = new Booking(
+                Math.random().toString(),
+                placeId,
+                fetchedUserId,
+                placeTitle,
+                placeImage,
+                firstName,
+                lastName,
+                guestNumber,
+                dateFrom,
+                dateTo
+            );
+            // Sends POST request to add booking
+            // Store data we get back to "name" field
+            // Return observable chain for subscription
+            return this.http.post<{name: string}>(
+                `https://ionic-angular-project-d88b4.firebaseio.com/bookings.json?auth=${token}`,
+                {
+                    ...newBooking,
+                    id: null
+                }
+            )
+        }),
+        switchMap(resData => {
+            generatedId = resData.name;
+            return this.bookings;
+        }),
+        take(1),            
+        tap(bookings => {
+            newBooking.id=generatedId;
+            this._bookings.next(bookings.concat(newBooking));
+        })
         )
     }
 
     cancelBooking(bookingId: string){
-
-        //Sends delete request
-        return this.http.delete(`https://ionic-angular-project-d88b4.firebaseio.com/bookings/${bookingId}.json`)
-        .pipe(
+        return this.authService.token.pipe(
+            take(1),
+            switchMap(token => {
+                //Sends delete request
+                return this.http.delete(`https://ionic-angular-project-d88b4.firebaseio.com/bookings/${bookingId}.json?auth=${token}`)
+            }),
             switchMap(()=>{
                 return this.bookings; //Delete list of bookings locally
             }),
@@ -80,21 +101,49 @@ export class BookingService {
                 this._bookings.next(bookings.filter(b=> b.id!==bookingId));
             })
         );
-
-        // return this.bookings.pipe(
-        //     take(1), 
-        //     delay(1000), 
-        //     tap(bookings => {
-        //     this._bookings.next(bookings.filter(b=> b.id!==bookingId));
-        //     })
-        // );
     }
 
-    fetchBookings(){
-        //Fetch orders for currently logged in user
-        return this.http.get<{[key: string] : BookingData}>(`https://ionic-angular-project-d88b4.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`)
-        .pipe(
-            map(bookingData => {
+    fetchBooking(bookingId: string){
+        return this.authService.token.pipe(
+            take(1),
+            switchMap( token => {
+                return this.http.get<BookingData>(
+                    `https://ionic-angular-project-d88b4.firebaseio.com/bookings/${bookingId}.json?&auth=${token}`
+                )
+            }),
+            map( b => {
+                return new Booking(
+                    bookingId,
+                    b.placeId,
+                    b.userId,
+                    b.placeTitle,
+                    b.placeImage,
+                    b.firstName,
+                    b.lastName,
+                    b.guestNumber,
+                    new Date(b.bookedFrom),
+                    new Date(b.bookedTo),
+                )
+            })
+        );
+    }
+
+    fetchBookings(){   
+        let fetchedUserId: string;
+        return this.authService.userId.pipe(take(1), switchMap(userId => {
+            if(!userId)
+                throw new Error('User not found!');
+            fetchedUserId = userId;
+
+            return this.authService.token;
+            
+        }),
+        take(1),
+        switchMap(token => {
+            return this.http.get<{[key: string] : BookingData}>(
+                `https://ionic-angular-project-d88b4.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${fetchedUserId}"&auth=${token}`)
+        }),
+        map(bookingData => {
                 const bookings = [];
                 for(const key in bookingData){
                     if(bookingData.hasOwnProperty(key)){
@@ -108,7 +157,7 @@ export class BookingService {
                             bookingData[key].lastName,
                             bookingData[key].guestNumber,
                             new Date(bookingData[key].bookedFrom),
-                            new Date(bookingData[key].bookedto)
+                            new Date(bookingData[key].bookedTo)
                         ))
                     }
                 }
@@ -118,6 +167,6 @@ export class BookingService {
                 //Emits fetch as new list of bookings
                 this._bookings.next(bookings);
             })
-        )
+        );
     }
 }
